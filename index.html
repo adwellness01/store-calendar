@@ -294,7 +294,7 @@ function renderCal(){
       let lane = lanes.findIndex(endCol => endCol < c0);
       if(lane < 0){ lane = lanes.length; lanes.push(c1); } else lanes[lane] = c1;
       bars += '<button type="button" class="ev' + (e.s < ws ? ' cl' : '') + (e.e > we ? ' cr' : '') + '" data-st="' + e.st + '" data-i="' + e.i + '" style="grid-column:' + (c0+1) + ' / ' + (c1+2) + ';grid-row:' + (lane+1) + '" title="' + esc(e.title + '（' + catName(e.cat) + '・' + stName(e.st) + '）') + '">' +
-        '<small>' + catName(e.cat) + '</small>' + esc(e.title) + '</button>';
+        (c1 - c0 >= 1 ? '<small>' + catName(e.cat) + '</small>' : '') + esc(e.title) + '</button>';
     });
     html += '<div class="week"><div class="cells">' + cells + '</div><div class="evs">' + bars + '</div></div>';
   }

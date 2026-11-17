@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>ドン・キホーテ 店頭施策カレンダー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#18212f; --sub:#5b6778; --line:#dfe4ec;
+  --weekend:#eef1f6; --accent:#2b4fd8; --accent-soft:#e6ebfc;
+  --c-tent:#c98a00; --c-tent-soft:#fbf1d6;
+  --c-fixed:#0f8f86; --c-fixed-soft:#dcf3f0;
+  --sat:#2f6fc4; --sun:#c9483b;
+  --label:168px;
+  --f-display:"Zen Kaku Gothic New","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11151c; --surface:#1a2029; --ink:#e9edf4; --sub:#9aa6b8; --line:#2c3543;
+    --weekend:#202835; --accent:#8fa6ff; --accent-soft:#232e52;
+    --c-tent:#e8b33a; --c-tent-soft:#3a2f12;
+    --c-fixed:#3cc4b9; --c-fixed-soft:#123532;
+    --sat:#7fb0ee; --sun:#f08a7e;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;-webkit-text-size-adjust:100%}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:20px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(22px,4vw,30px);line-height:1.3;margin:0;text-wrap:balance}
+.updated{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums}
+.notice{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:13.5px}
+.months{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.months button{flex:none;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.3;min-width:64px}
+.months button small{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
+.months button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:700}
+.months button[aria-current="true"] small{color:var(--surface)}
+.months .yr{flex:none;align-self:center;font-size:12px;color:var(--sub);padding:0 4px;font-variant-numeric:tabular-nums}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;font-variant-numeric:tabular-nums}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:4px 12px;cursor:pointer}
+.filters button[aria-pressed="false"]{color:var(--sub);background:transparent;text-decoration:line-through}
+[data-st="fixed"]{--c:var(--c-fixed);--cs:var(--c-fixed-soft)}
+[data-st="tent"]{--c:var(--c-tent);--cs:var(--c-tent-soft)}
+[data-st="idea"]{--c:var(--sub);--cs:var(--weekend)}
+.bar[data-st="tent"]{background:repeating-linear-gradient(135deg,var(--c) 0 6px,var(--cs) 6px 10px)}
+.bar[data-st="idea"]{background:transparent;border:2px dashed var(--c)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--sub)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:28px;height:12px;border-radius:6px;background:var(--c);flex:none}
+.legend [data-st="tent"] i{background:repeating-linear-gradient(135deg,var(--c) 0 6px,var(--cs) 6px 10px)}
+.legend [data-st="idea"] i{background:transparent;border:2px dashed var(--c)}
+.gantt{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.gantt-inner{position:relative;min-width:calc(var(--label) + var(--n) * 26px)}
+.stripes{position:absolute;inset:0 0 0 var(--label);display:grid;grid-template-columns:repeat(var(--n),1fr);pointer-events:none}
+.stripes i{border-left:1px solid var(--line)}
+.stripes i.we{background:var(--weekend)}
+.stripes i.today{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent), inset -2px 0 0 var(--accent)}
+.row{position:relative;display:grid;grid-template-columns:var(--label) 1fr}
+.lab{position:sticky;left:0;z-index:2;background:var(--surface);padding:6px 10px 6px 14px;font-size:13px;line-height:1.45;
+  border-right:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.track{display:grid;grid-template-columns:repeat(var(--n),1fr);align-items:center;min-height:32px}
+.days{border-bottom:1px solid var(--line)}
+.days .track{align-items:stretch}
+.days span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;font-size:12px;line-height:1.3;font-variant-numeric:tabular-nums}
+.days span em{font-style:normal;font-size:10px;color:var(--sub)}
+.days span.sat, .days span.sat em{color:var(--sat)}
+.days span.sun, .days span.sun em{color:var(--sun)}
+.days span.today, .days span.today em{font-weight:700;color:var(--accent)}
+.group{border-top:1px solid var(--line)}
+.days + .group{border-top:0}
+.group .lab{font-weight:700;font-size:12px;letter-spacing:.04em;padding-top:12px}
+.bar{height:14px;background:var(--c);border-radius:7px;margin-inline:2px}
+.bar.from-prev{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.bar.to-next{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.none{padding:6px 10px;font-size:12.5px;color:var(--sub)}
+h3{font-family:var(--f-display);font-weight:700;font-size:16px;margin:8px 0 -8px}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.item{display:grid;grid-template-columns:190px 1fr;gap:4px 16px;padding:12px 14px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.when{font-variant-numeric:tabular-nums;font-size:14px;font-weight:500}
+.what{min-width:0}
+.what strong{font-weight:700}
+.chip{display:inline-flex;align-items:center;font-size:11.5px;font-weight:500;color:var(--c);background:var(--cs);border-radius:4px;padding:0 6px;margin-right:6px;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.note{color:var(--sub);font-size:13px;margin:2px 0 0;white-space:pre-wrap}
+.empty{padding:28px 14px;text-align:center;color:var(--sub)}
+@media (max-width:640px){
+  :root{--label:112px}
+  .item{grid-template-columns:1fr}
+  .lab{font-size:12px;padding-left:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>ドン・キホーテ 店頭施策カレンダー</h1>
+    <div class="updated" id="updated">読み込み中…</div>
+  </div>
+  <div class="notice" id="notice" hidden></div>
+  <nav class="months" id="months" aria-label="月の切り替え"></nav>
+  <div class="bar-row"><h2 id="month-title"></h2><div class="filters" id="filters" aria-label="表示する区分"></div></div>
+  <div class="legend" id="legend" aria-label="色の見方"></div>
+  <div class="gantt" id="gantt"></div>
+  <h3>この月の予定一覧</h3>
+  <div class="list" id="list"></div>
+</div>
+<script>
+(function(){
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVpnqq65vF_mLn_Eb-kGN_BL25i-nnLvPieEPgPGMOwp4NpUvotToONt6-d4y3cnDo53Lb3obP9cXx/pub?gid=0&single=true&output=csv';
+const CATS = [
+  {id:'event',    name:'催事・イベント', keys:['催事','イベント']},
+  {id:'release',  name:'商品発売日',     keys:['発売']},
+  {id:'delivery', name:'納品',           keys:['納品']},
+  {id:'round',    name:'ラウンド',       keys:['ラウンド']},
+  {id:'meeting',  name:'打ち合わせ',     keys:['打ち合わせ','打合せ','打合わせ','商談']},
+  {id:'other',    name:'その他',         keys:[]}
+];
+const STATUS = [
+  {id:'fixed', name:'決定',   keys:['決定','確定']},
+  {id:'tent',  name:'仮設定', keys:['仮']},
+  {id:'idea',  name:'検討中', keys:['検討']}
+];
+const WD = ['日','月','火','水','木','金','土'];
+const el = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mi = d => d.getFullYear()*12 + d.getMonth();
+const fmt = d => (d.getMonth()+1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')';
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const catOf = v => { v = String(v||'').trim(); const c = CATS.find(c => c.name === v || c.keys.some(k => v.includes(k))); return c ? c.id : 'other'; };
+const stOf = v => { v = String(v||'').trim(); const s = STATUS.find(s => s.name === v || s.keys.some(k => v.includes(k))); return s ? s.id : 'tent'; };
+const stName = id => STATUS.find(s => s.id === id).name;
+
+function parseDate(v){
+  v = String(v||'').trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  let m = /^(\d{4})\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/.exec(v);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = /^(\d{1,2})\s*[\/月]\s*(\d{1,2})/.exec(v);
+  if(m){ const d = new Date(today.getFullYear(), +m[1]-1, +m[2]); if(mi(d) < mi(today) - 6) d.setFullYear(d.getFullYear()+1); return d; }
+  return null;
+}
+function parseCSV(text){
+  const rows = []; let row = [], f = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for(let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if(q){
+      if(ch === '"'){ if(text[i+1] === '"'){ f += '"'; i++; } else q = false; }
+      else f += ch;
+    }else if(ch === '"') q = true;
+    else if(ch === ','){ row.push(f); f = ''; }
+    else if(ch === '\n'){ row.push(f); rows.push(row); row = []; f = ''; }
+    else if(ch !== '\r') f += ch;
+  }
+  if(f !== '' || row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function toEvents(rows){
+  if(!rows.length) return [];
+  const h = rows[0].map(s => s.trim());
+  const idx = (names, fb) => { const i = h.findIndex(x => names.some(n => x.includes(n))); return i >= 0 ? i : fb; };
+  const ci = idx(['区分'],0), ti = idx(['予定','タイトル','件名'],1), si = idx(['開始'],2), ei = idx(['終了'],3), sti = idx(['状態'],4), ni = idx(['メモ','備考'],5);
+  const out = [];
+  rows.slice(1).forEach(r => {
+    const title = (r[ti]||'').trim();
+    const s = parseDate(r[si]);
+    if(!title || !s) return;
+    let e = parseDate(r[ei]) || s;
+    if(e < s) e = s;
+    out.push({cat:catOf(r[ci]), title, s, e, st:stOf(r[sti]), note:(r[ni]||'').trim()});
+  });
+  return out.sort((a,b) => a.s - b.s || a.e - b.e);
+}
+
+let evs = [], firstM = mi(today), lastM = mi(today)+11, cur = mi(today);
+const hidden = new Set();
+const inMonth = (e, m) => mi(e.s) <= m && mi(e.e) >= m;
+
+function bounds(){
+  firstM = Math.min(mi(today), ...evs.map(e => mi(e.s)));
+  lastM  = Math.max(mi(today)+11, ...evs.map(e => mi(e.e)));
+  cur = Math.min(Math.max(cur, firstM), lastM);
+}
+function fromHash(){
+  const m = /^#(\d{4})-(\d{2})$/.exec(location.hash);
+  if(!m) return null;
+  const v = Number(m[1])*12 + Number(m[2]) - 1;
+  return (v >= firstM && v <= lastM) ? v : null;
+}
+function setHash(){
+  const h = '#' + Math.floor(cur/12) + '-' + String(cur%12+1).padStart(2,'0');
+  if(location.hash !== h){ try{ history.replaceState(null,'',h); }catch(_){} }
+}
+function renderMonths(){
+  let html = '', lastY = null;
+  for(let m = firstM; m <= lastM; m++){
+    const y = Math.floor(m/12);
+    if(y !== lastY){ html += '<span class="yr">' + y + '年</span>'; lastY = y; }
+    const n = evs.filter(e => inMonth(e, m)).length;
+    html += '<button type="button" data-m="' + m + '" aria-current="' + (m === cur) + '">' + (m%12+1) + '月<small>' + (n ? n + '件' : '—') + '</small></button>';
+  }
+  el('months').innerHTML = html;
+  const a = el('months').querySelector('[aria-current="true"]');
+  if(a) el('months').scrollLeft = Math.max(0, a.offsetLeft - 80);
+}
+function renderFilters(){
+  el('filters').innerHTML = CATS.map(c => '<button type="button" data-cat="' + c.id + '" aria-pressed="' + !hidden.has(c.id) + '">' + c.name + '</button>').join('');
+}
+function renderGantt(){
+  const y = Math.floor(cur/12), mo = cur%12, n = new Date(y, mo+1, 0).getDate();
+  const isToday = d => y === today.getFullYear() && mo === today.getMonth() && d === today.getDate();
+  let stripes = '', days = '';
+  for(let d = 1; d <= n; d++){
+    const w = new Date(y, mo, d).getDay(), t = isToday(d);
+    stripes += '<i class="' + ((w === 0 || w === 6) ? 'we ' : '') + (t ? 'today' : '') + '"></i>';
+    days += '<span class="' + (w === 6 ? 'sat ' : w === 0 ? 'sun ' : '') + (t ? 'today' : '') + '">' + d + '<em>' + (t ? '今日' : WD[w]) + '</em></span>';
+  }
+  let rows = '<div class="row days"><div class="lab"></div><div class="track">' + days + '</div></div>';
+  CATS.filter(c => !hidden.has(c.id)).forEach(c => {
+    rows += '<div class="row group"><div class="lab">' + c.name + '</div><div class="track"></div></div>';
+    const list = evs.filter(e => e.cat === c.id && inMonth(e, cur));
+    if(!list.length){ rows += '<div class="row"><div class="lab none">予定なし</div><div class="track"></div></div>'; return; }
+    list.forEach(e => {
+      const prev = mi(e.s) < cur, next = mi(e.e) > cur;
+      const s = prev ? 1 : e.s.getDate(), en = next ? n : e.e.getDate();
+      rows += '<div class="row"><div class="lab">' + esc(e.title) + '</div><div class="track"><div class="bar' + (prev ? ' from-prev' : '') + (next ? ' to-next' : '') +
+        '" data-st="' + e.st + '" style="grid-column:' + s + ' / ' + (en+1) + '" title="' + esc('【' + stName(e.st) + '】' + e.title + ' ' + fmt(e.s) + (e.e > e.s ? '〜' + fmt(e.e) : '')) + '"></div></div></div>';
+    });
+  });
+  el('gantt').innerHTML = '<div class="gantt-inner" style="--n:' + n + '"><div class="stripes">' + stripes + '</div>' + rows + '</div>';
+}
+function renderList(){
+  const list = evs.filter(e => inMonth(e, cur) && !hidden.has(e.cat));
+  if(!list.length){ el('list').innerHTML = '<div class="empty">この月の予定はまだ登録されていません。</div>'; return; }
+  const name = Object.fromEntries(CATS.map(c => [c.id, c.name]));
+  el('list').innerHTML = list.map(e =>
+    '<div class="item" data-st="' + e.st + '"><div class="when">' + fmt(e.s) + (e.e > e.s ? ' 〜 ' + fmt(e.e) : '') + '</div>' +
+    '<div class="what"><span class="chip">' + stName(e.st) + '</span><strong>' + esc(e.title) + '</strong><span class="tag">' + name[e.cat] + '</span>' +
+    (e.note ? '<p class="note">' + esc(e.note) + '</p>' : '') + '</div></div>').join('');
+}
+function render(){
+  el('month-title').textContent = Math.floor(cur/12) + '年' + (cur%12+1) + '月';
+  renderMonths(); renderFilters(); renderGantt(); renderList();
+}
+
+el('legend').innerHTML = STATUS.map(s => '<span data-st="' + s.id + '"><i></i>' + s.name + '</span>').join('');
+el('months').addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if(b){ cur = Number(b.dataset.m); setHash(); render(); } });
+el('filters').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-cat]'); if(!b) return;
+  hidden.has(b.dataset.cat) ? hidden.delete(b.dataset.cat) : hidden.add(b.dataset.cat);
+  render();
+});
+window.addEventListener('hashchange', () => { const m = fromHash(); if(m !== null && m !== cur){ cur = m; render(); } });
+
+const h0 = fromHash(); if(h0 !== null) cur = h0;
+render();
+
+const stamp = () => { const d = new Date(); return d.getMonth()+1 + '月' + d.getDate() + '日 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0'); };
+fetch(CSV_URL + '&t=' + Date.now(), {cache:'no-store'})
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.text(); })
+  .then(t => {
+    evs = toEvents(parseCSV(t));
+    bounds();
+    const h = fromHash(); if(h !== null) cur = h;
+    render();
+    el('updated').textContent = stamp() + ' 時点の内容';
+  })
+  .catch(() => {
+    el('updated').textContent = '';
+    el('notice').hidden = false;
+    el('notice').textContent = '予定データを読み込めませんでした。時間をおいてページを再読み込みしてください。';
+  });
+})();
+</script>
+</body>
+</html>

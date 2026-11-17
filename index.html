@@ -99,8 +99,24 @@ h3{font-family:var(--f-display);font-weight:700;font-size:16px;margin:8px 0 -8px
 .tag{display:inline-block;font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap}
 .note{color:var(--sub);font-size:13px;margin:2px 0 0;white-space:pre-wrap}
 .empty{padding:28px 14px;text-align:center;color:var(--sub)}
+.head-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:700}
+.btn.small{padding:2px 10px;font-size:12px}
+.btn.danger{color:var(--sun)}
+.btn:disabled{opacity:.5;cursor:default}
+.editbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:10px 14px}
+.editbar .msg{flex:1 1 220px;font-size:13px;color:var(--sub);min-width:0}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--sub);min-width:0}
+.form .full{grid-column:1 / -1}
+.form input,.form select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0;width:100%}
+.form .actions{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.form .err{color:var(--sun);font-size:13px}
+.item .ops{grid-column:1 / -1;display:flex;gap:6px}
 @media (max-width:640px){
   :root{--label:112px}
+  .form{grid-template-columns:1fr}
   .item{grid-template-columns:1fr}
   .lab{font-size:12px;padding-left:10px}
 }
@@ -110,9 +126,28 @@ h3{font-family:var(--f-display);font-weight:700;font-size:16px;margin:8px 0 -8px
 <div class="wrap">
   <div class="head">
     <h1>ドン・キホーテ 店頭施策カレンダー</h1>
-    <div class="updated" id="updated">読み込み中…</div>
+    <div class="head-right"><div class="updated" id="updated">読み込み中…</div><button type="button" class="btn" id="edit-toggle" disabled>編集する</button></div>
   </div>
   <div class="notice" id="notice" hidden></div>
+  <form class="form" id="pass-form" hidden novalidate>
+    <label class="full">編集用の合言葉<input id="pass" type="password" autocomplete="current-password"></label>
+    <div class="actions"><button type="submit" class="btn primary" id="pass-ok">編集を始める</button><button type="button" class="btn" id="pass-cancel">キャンセル</button><span class="err" id="pass-err"></span></div>
+  </form>
+  <div class="editbar" id="editbar" hidden>
+    <span class="msg" id="edit-msg"></span>
+    <button type="button" class="btn" id="add-btn">予定を追加</button>
+    <button type="button" class="btn" id="revert-btn">変更を取り消す</button>
+    <button type="button" class="btn primary" id="save-btn">保存する</button>
+  </div>
+  <form class="form" id="form" hidden novalidate>
+    <label>区分<select id="f-cat"></select></label>
+    <label>予定名<input id="f-title" type="text" maxlength="60" autocomplete="off"></label>
+    <label>開始日<input id="f-start" type="date"></label>
+    <label>終了日（1日だけなら空欄）<input id="f-end" type="date"></label>
+    <label class="full">状態<select id="f-status"></select></label>
+    <label class="full">メモ（任意）<input id="f-note" type="text" maxlength="120" autocomplete="off"></label>
+    <div class="actions"><button type="submit" class="btn primary" id="f-ok">決定</button><button type="button" class="btn" id="f-cancel">キャンセル</button><span class="err" id="f-err"></span></div>
+  </form>
   <nav class="months" id="months" aria-label="月の切り替え"></nav>
   <div class="bar-row"><h2 id="month-title"></h2><div class="filters" id="filters" aria-label="表示する区分"></div></div>
   <div class="legend" id="legend" aria-label="色の見方"></div>
@@ -122,6 +157,7 @@ h3{font-family:var(--f-display);font-weight:700;font-size:16px;margin:8px 0 -8px
 </div>
 <script>
 (function(){
+const API_URL = 'https://script.google.com/macros/s/AKfycbytmCAu54guo-LEKD3Mc2vcXXvJmBFOtSmE5JQw0Qt1x2Wkb9ydpSC5quNhVOWa8G6c/exec';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVpnqq65vF_mLn_Eb-kGN_BL25i-nnLvPieEPgPGMOwp4NpUvotToONt6-d4y3cnDo53Lb3obP9cXx/pub?gid=0&single=true&output=csv';
 const CATS = [
   {id:'event',    name:'催事・イベント', keys:['催事','イベント']},
@@ -141,11 +177,18 @@ const el = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mi = d => d.getFullYear()*12 + d.getMonth();
 const fmt = d => (d.getMonth()+1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')';
+const iso = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const parseIso = s => { const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); };
 const now = new Date();
 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 const catOf = v => { v = String(v||'').trim(); const c = CATS.find(c => c.name === v || c.keys.some(k => v.includes(k))); return c ? c.id : 'other'; };
 const stOf = v => { v = String(v||'').trim(); const s = STATUS.find(s => s.name === v || s.keys.some(k => v.includes(k))); return s ? s.id : 'tent'; };
+const catName = id => CATS.find(c => c.id === id).name;
 const stName = id => STATUS.find(s => s.id === id).name;
+const store = {
+  get(){ try{ return sessionStorage.getItem('cal-pass') || ''; }catch(_){ return ''; } },
+  set(v){ try{ v ? sessionStorage.setItem('cal-pass', v) : sessionStorage.removeItem('cal-pass'); }catch(_){} }
+};
 
 function parseDate(v){
   v = String(v||'').trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
@@ -169,30 +212,35 @@ function parseCSV(text){
     else if(ch !== '\r') f += ch;
   }
   if(f !== '' || row.length){ row.push(f); rows.push(row); }
-  return rows;
+  return rows.slice(1).map(r => ({cat:r[0], title:r[1], start:r[2], end:r[3], status:r[4], note:r[5]}));
 }
-function toEvents(rows){
-  if(!rows.length) return [];
-  const h = rows[0].map(s => s.trim());
-  const idx = (names, fb) => { const i = h.findIndex(x => names.some(n => x.includes(n))); return i >= 0 ? i : fb; };
-  const ci = idx(['区分'],0), ti = idx(['予定','タイトル','件名'],1), si = idx(['開始'],2), ei = idx(['終了'],3), sti = idx(['状態'],4), ni = idx(['メモ','備考'],5);
+function normalize(list){
   const out = [];
-  rows.slice(1).forEach(r => {
-    const title = (r[ti]||'').trim();
-    const s = parseDate(r[si]);
+  (list || []).forEach(r => {
+    const title = String(r.title||'').trim();
+    const s = parseDate(r.start);
     if(!title || !s) return;
-    let e = parseDate(r[ei]) || s;
+    let e = parseDate(r.end) || s;
     if(e < s) e = s;
-    out.push({cat:catOf(r[ci]), title, s, e, st:stOf(r[sti]), note:(r[ni]||'').trim()});
+    out.push({cat:catOf(r.cat), title, start:iso(s), end:iso(e), st:stOf(r.status), note:String(r.note||'').trim()});
   });
-  return out.sort((a,b) => a.s - b.s || a.e - b.e);
+  return out;
 }
 
+let EVENTS = [], ORIGINAL = '[]';
 let evs = [], firstM = mi(today), lastM = mi(today)+11, cur = mi(today);
 const hidden = new Set();
+let loaded = false, editing = false, saving = false, editIdx = null, askPass = false, flash = '';
+const isDirty = () => JSON.stringify(EVENTS) !== ORIGINAL;
 const inMonth = (e, m) => mi(e.s) <= m && mi(e.e) >= m;
 
-function bounds(){
+function setData(list, updated){
+  EVENTS = normalize(list);
+  ORIGINAL = JSON.stringify(EVENTS);
+  if(updated !== undefined) el('updated').textContent = updated ? '最終更新 ' + updated : '';
+}
+function recompute(){
+  evs = EVENTS.map((e, i) => ({...e, i, s:parseIso(e.start), e:parseIso(e.end)})).sort((a,b) => a.s - b.s || a.e - b.e);
   firstM = Math.min(mi(today), ...evs.map(e => mi(e.s)));
   lastM  = Math.max(mi(today)+11, ...evs.map(e => mi(e.e)));
   cur = Math.min(Math.max(cur, firstM), lastM);
@@ -247,18 +295,130 @@ function renderGantt(){
 }
 function renderList(){
   const list = evs.filter(e => inMonth(e, cur) && !hidden.has(e.cat));
-  if(!list.length){ el('list').innerHTML = '<div class="empty">この月の予定はまだ登録されていません。</div>'; return; }
-  const name = Object.fromEntries(CATS.map(c => [c.id, c.name]));
+  if(!list.length){ el('list').innerHTML = '<div class="empty">この月の予定はまだ登録されていません。' + (editing ? '「予定を追加」から登録できます。' : '') + '</div>'; return; }
   el('list').innerHTML = list.map(e =>
     '<div class="item" data-st="' + e.st + '"><div class="when">' + fmt(e.s) + (e.e > e.s ? ' 〜 ' + fmt(e.e) : '') + '</div>' +
-    '<div class="what"><span class="chip">' + stName(e.st) + '</span><strong>' + esc(e.title) + '</strong><span class="tag">' + name[e.cat] + '</span>' +
-    (e.note ? '<p class="note">' + esc(e.note) + '</p>' : '') + '</div></div>').join('');
+    '<div class="what"><span class="chip">' + stName(e.st) + '</span><strong>' + esc(e.title) + '</strong><span class="tag">' + catName(e.cat) + '</span>' +
+    (e.note ? '<p class="note">' + esc(e.note) + '</p>' : '') + '</div>' +
+    (editing ? '<div class="ops"><button type="button" class="btn small" data-edit="' + e.i + '">編集</button><button type="button" class="btn small danger" data-del="' + e.i + '">削除</button></div>' : '') +
+    '</div>').join('');
+}
+function renderEdit(){
+  const dirty = isDirty();
+  const t = el('edit-toggle');
+  t.textContent = editing ? '編集を終える' : '編集する';
+  t.disabled = !loaded || saving || (editing && dirty);
+  el('pass-form').hidden = !askPass;
+  el('editbar').hidden = !editing;
+  el('edit-msg').textContent = flash || (dirty ? '未保存の変更があります。「保存する」を押すと、このページを見ている全員に反映されます。' : '予定の追加・編集・削除ができます。');
+  el('revert-btn').disabled = !dirty || saving;
+  el('save-btn').disabled = !dirty || saving;
+  el('save-btn').textContent = saving ? '保存中…' : '保存する';
+  el('add-btn').disabled = saving;
+  el('form').hidden = editIdx === null;
 }
 function render(){
+  recompute();
   el('month-title').textContent = Math.floor(cur/12) + '年' + (cur%12+1) + '月';
-  renderMonths(); renderFilters(); renderGantt(); renderList();
+  renderMonths(); renderFilters(); renderGantt(); renderList(); renderEdit();
 }
 
+async function api(body){
+  const r = await fetch(API_URL, {method:'POST', body: JSON.stringify(body)});
+  if(!r.ok) throw new Error('http');
+  return r.json();
+}
+async function load(){
+  try{
+    const r = await fetch(API_URL + '?t=' + Date.now());
+    const j = await r.json();
+    if(!j.ok) throw new Error('api');
+    setData(j.events, j.updated);
+  }catch(_){
+    const r = await fetch(CSV_URL + '&t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('csv');
+    setData(parseCSV(await r.text()), '');
+  }
+}
+
+async function startEdit(pass){
+  el('pass-err').textContent = '確認しています…';
+  el('pass-ok').disabled = true;
+  try{
+    const j = await api({pass, action:'check'});
+    if(!j.ok){ el('pass-err').textContent = j.error === 'wrong_pass' ? '合言葉が違います。' : '確認できませんでした。'; store.set(''); return; }
+    store.set(pass);
+    await load();
+    askPass = false; editing = true; flash = '';
+    el('pass').value = ''; el('pass-err').textContent = '';
+    render();
+  }catch(_){
+    el('pass-err').textContent = '通信できませんでした。少し待ってからもう一度お試しください。';
+  }finally{
+    el('pass-ok').disabled = false;
+  }
+}
+function openForm(idx){
+  editIdx = idx;
+  const e = idx >= 0 ? EVENTS[idx] : null;
+  const def = (mi(today) === cur) ? today : new Date(Math.floor(cur/12), cur%12, 1);
+  el('f-cat').value = e ? e.cat : 'event';
+  el('f-title').value = e ? e.title : '';
+  el('f-start').value = e ? e.start : iso(def);
+  el('f-end').value = e && e.end !== e.start ? e.end : '';
+  el('f-status').value = e ? e.st : 'tent';
+  el('f-note').value = e ? e.note : '';
+  el('f-err').textContent = '';
+  el('f-ok').textContent = e ? '変更を決定' : '追加を決定';
+  renderEdit();
+  el('form').scrollIntoView({block:'nearest'});
+  el('f-title').focus();
+}
+function submitForm(ev){
+  ev.preventDefault();
+  const title = el('f-title').value.trim();
+  const start = el('f-start').value;
+  const end = el('f-end').value || start;
+  const ok = /^\d{4}-\d{2}-\d{2}$/;
+  if(!title){ el('f-err').textContent = '予定名を入力してください。'; return; }
+  if(!ok.test(start)){ el('f-err').textContent = '開始日を入力してください。'; return; }
+  if(!ok.test(end) || end < start){ el('f-err').textContent = '終了日は開始日以降にしてください。'; return; }
+  const obj = {cat: el('f-cat').value, title, start, end, st: el('f-status').value, note: el('f-note').value.trim()};
+  if(editIdx >= 0) EVENTS[editIdx] = obj; else EVENTS.push(obj);
+  editIdx = null; flash = '';
+  cur = mi(parseIso(start));
+  setHash(); render();
+}
+async function save(){
+  if(saving || !isDirty()) return;
+  saving = true; flash = '保存しています…'; renderEdit();
+  try{
+    const j = await api({pass: store.get(), action:'save', events: EVENTS.map(e => ({
+      cat: catName(e.cat), title: e.title, start: e.start.replace(/-/g,'/'), end: e.end === e.start ? '' : e.end.replace(/-/g,'/'), status: stName(e.st), note: e.note
+    }))});
+    if(j.ok){
+      setData(j.events, j.updated);
+      flash = '保存しました。';
+    }else if(j.error === 'wrong_pass'){
+      store.set(''); editing = false; editIdx = null;
+      flash = '';
+      el('notice').hidden = false;
+      el('notice').textContent = '合言葉が変わったため保存できませんでした。もう一度「編集する」から入り直してください。';
+    }else if(j.error === 'busy'){
+      flash = 'ほかの人が保存中です。少し待ってからもう一度「保存する」を押してください。';
+    }else{
+      flash = '保存できませんでした。もう一度「保存する」を押してください。';
+    }
+  }catch(_){
+    flash = '通信できませんでした。もう一度「保存する」を押してください。';
+  }finally{
+    saving = false;
+    render();
+  }
+}
+
+el('f-cat').innerHTML = CATS.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('');
+el('f-status').innerHTML = STATUS.map(s => '<option value="' + s.id + '">' + s.name + '</option>').join('');
 el('legend').innerHTML = STATUS.map(s => '<span data-st="' + s.id + '"><i></i>' + s.name + '</span>').join('');
 el('months').addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if(b){ cur = Number(b.dataset.m); setHash(); render(); } });
 el('filters').addEventListener('click', ev => {
@@ -266,26 +426,41 @@ el('filters').addEventListener('click', ev => {
   hidden.has(b.dataset.cat) ? hidden.delete(b.dataset.cat) : hidden.add(b.dataset.cat);
   render();
 });
+el('list').addEventListener('click', ev => {
+  const ed = ev.target.closest('button[data-edit]');
+  if(ed){ openForm(Number(ed.dataset.edit)); return; }
+  const del = ev.target.closest('button[data-del]');
+  if(del){ EVENTS.splice(Number(del.dataset.del), 1); editIdx = null; flash = ''; render(); }
+});
+el('edit-toggle').addEventListener('click', () => {
+  if(editing){ editing = false; editIdx = null; flash = ''; render(); return; }
+  el('notice').hidden = true;
+  const saved = store.get();
+  if(saved){ startEdit(saved); return; }
+  askPass = !askPass; renderEdit();
+  if(askPass) el('pass').focus();
+});
+el('pass-form').addEventListener('submit', ev => { ev.preventDefault(); const p = el('pass').value.trim(); if(p) startEdit(p); else el('pass-err').textContent = '合言葉を入力してください。'; });
+el('pass-cancel').addEventListener('click', () => { askPass = false; el('pass-err').textContent = ''; renderEdit(); });
+el('add-btn').addEventListener('click', () => openForm(-1));
+el('revert-btn').addEventListener('click', () => { EVENTS = JSON.parse(ORIGINAL); editIdx = null; flash = ''; render(); });
+el('save-btn').addEventListener('click', save);
+el('form').addEventListener('submit', submitForm);
+el('f-cancel').addEventListener('click', () => { editIdx = null; renderEdit(); });
 window.addEventListener('hashchange', () => { const m = fromHash(); if(m !== null && m !== cur){ cur = m; render(); } });
+window.addEventListener('beforeunload', ev => { if(editing && isDirty()){ ev.preventDefault(); ev.returnValue = ''; } });
 
-const h0 = fromHash(); if(h0 !== null) cur = h0;
 render();
-
-const stamp = () => { const d = new Date(); return d.getMonth()+1 + '月' + d.getDate() + '日 ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0'); };
-fetch(CSV_URL + '&t=' + Date.now(), {cache:'no-store'})
-  .then(r => { if(!r.ok) throw new Error(r.status); return r.text(); })
-  .then(t => {
-    evs = toEvents(parseCSV(t));
-    bounds();
-    const h = fromHash(); if(h !== null) cur = h;
-    render();
-    el('updated').textContent = stamp() + ' 時点の内容';
-  })
-  .catch(() => {
-    el('updated').textContent = '';
-    el('notice').hidden = false;
-    el('notice').textContent = '予定データを読み込めませんでした。時間をおいてページを再読み込みしてください。';
-  });
+load().then(() => {
+  loaded = true;
+  recompute();
+  const h = fromHash(); if(h !== null) cur = h;
+  render();
+}).catch(() => {
+  el('updated').textContent = '';
+  el('notice').hidden = false;
+  el('notice').textContent = '予定データを読み込めませんでした。時間をおいてページを再読み込みしてください。';
+});
 })();
 </script>
 </body>
